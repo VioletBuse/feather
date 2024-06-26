@@ -6,7 +6,7 @@ import gleam/erlang
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/option.{type Option, None, Some}
+import gleam/option.{None, Some}
 import gleam/regex
 import gleam/result
 import gleam/string
