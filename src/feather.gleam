@@ -134,3 +134,24 @@ pub fn disconnect(connection: Connection) {
 pub fn optimize(connection: Connection) {
   sqlight.exec("PRAGMA optimize;", connection)
 }
+
+/// Created a short lived connection, runs the included function on it,
+/// and then disconnects. If the connection could not be established,
+/// the callback function is not run, and this function returns an `Error`.
+///
+/// This is particularly nice to use with use expressions:
+/// ```gleam
+/// use connection <- with_connection(default_config())
+///
+/// let result = sqlight.query(...)
+/// ```
+pub fn with_connection(
+  config: Config,
+  fxn: fn(Connection) -> a,
+) -> Result(a, Error) {
+  use connection <- result.try(connect(config))
+  let result = fxn(connection)
+
+  let _ = disconnect(connection)
+  Ok(result)
+}
