@@ -41,6 +41,7 @@ pub type Config {
     temp_store: TempStore,
     mmap_size: Option(Int),
     page_size: Option(Int),
+    foreign_keys: Bool,
   )
 }
 
@@ -52,6 +53,7 @@ pub fn default_config() -> Config {
     temp_store: TempStoreMemory,
     mmap_size: None,
     page_size: None,
+    foreign_keys: True,
   )
 }
 
@@ -78,6 +80,11 @@ pub fn connect(config: Config) -> Result(Connection, Error) {
     TempStoreFile -> "FILE"
     TempStoreMemory -> "MEMORY"
     TempStoreDefault -> "DEFAULT"
+  }
+
+  let foreign_keys = case config.foreign_keys {
+    True -> "on"
+    False -> "off"
   }
 
   use _ <- result.try(sqlight.exec(
@@ -107,6 +114,11 @@ pub fn connect(config: Config) -> Result(Connection, Error) {
     })
     |> option.unwrap(Ok(Nil)),
   )
+
+  use _ <- result.try(sqlight.exec(
+    "PRAGMA foreign_keys = " <> foreign_keys <> ";",
+    connection,
+  ))
 
   Ok(connection)
 }
