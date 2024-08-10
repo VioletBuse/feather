@@ -1,6 +1,7 @@
 import argv
 import filepath
 import gleam/bool
+import gleam/dict.{type Dict}
 import gleam/dynamic
 import gleam/erlang
 import gleam/int
@@ -10,10 +11,10 @@ import gleam/option.{None, Some}
 import gleam/regex
 import gleam/result
 import gleam/string
-import gloml
 import justin
 import simplifile
 import sqlight.{type Connection}
+import tom.{type Toml}
 
 const helptext = "
   gleam run -m feather/migrate -- <command> [options]
@@ -30,21 +31,24 @@ const helptext = "
         migrations directory.
 "
 
-fn get_migrations_dir() -> String {
+fn get_gleam_toml() -> Result(Dict(String, Toml), Nil) {
   simplifile.read("gleam.toml")
-  |> result.nil_error
-  |> result.map(gloml.decode(_, dynamic.field("migrations_dir", dynamic.string)))
-  |> result.map(result.map_error(_, fn(_) { Nil }))
-  |> result.flatten
+  |> result.nil_error()
+  |> result.map(tom.parse)
+  |> result.then(result.nil_error)
+}
+
+fn get_migrations_dir() -> String {
+  get_gleam_toml()
+  |> result.map(tom.get_string(_, ["migrations_dir"]))
+  |> result.then(result.nil_error)
   |> result.unwrap("./migrations")
 }
 
 fn get_schema_file() -> String {
-  simplifile.read("gleam.toml")
-  |> result.nil_error
-  |> result.map(gloml.decode(_, dynamic.field("schemafile", dynamic.string)))
-  |> result.map(result.map_error(_, fn(_) { Nil }))
-  |> result.flatten
+  get_gleam_toml()
+  |> result.map(tom.get_string(_, ["schemafile"]))
+  |> result.then(result.nil_error)
   |> result.unwrap("./schema.sql")
 }
 
