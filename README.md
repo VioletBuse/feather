@@ -4,7 +4,7 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/feather/)
 
 ```sh
-gleam add feather
+gleam add feather@v1
 ```
 Add the following fields to your gleam.toml file:
 
@@ -20,15 +20,16 @@ Running the command `gleam run -m feather -- schema` will create the file ./sche
 
 ```gleam
 import feather
+import feather/migrate
 import gleam/result
 import gleam/erlang
 import sqlight
 
 pub fn main() {
   let assert Ok(priv_dir) = erlang.priv_directory("my_module_name")
-  use migrations <- result.try(feather.get_migrations(priv_dir <> "/migrations"))
+  use migrations <- result.try(migrate.get_migrations(priv_dir <> "/migrations"))
   use connection <- feather.connect(feather.Config(..feather.default_config(), file: "./database.db"))
-  feather.migrate(migrations, on: connection)
+  migrate.migrate(migrations, on: connection)
 }
 ```
 
