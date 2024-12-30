@@ -8,7 +8,7 @@ import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option.{None, Some}
-import gleam/regex
+import gleam/regexp
 import gleam/result
 import gleam/string
 import justin
@@ -33,22 +33,22 @@ const helptext = "
 
 fn get_gleam_toml() -> Result(Dict(String, Toml), Nil) {
   simplifile.read("gleam.toml")
-  |> result.nil_error()
+  |> result.replace_error(Nil)
   |> result.map(tom.parse)
-  |> result.then(result.nil_error)
+  |> result.then(result.replace_error(_, Nil))
 }
 
 fn get_migrations_dir() -> String {
   get_gleam_toml()
   |> result.map(tom.get_string(_, ["migrations_dir"]))
-  |> result.then(result.nil_error)
+  |> result.then(result.replace_error(_, Nil))
   |> result.unwrap("./migrations")
 }
 
 fn get_schema_file() -> String {
   get_gleam_toml()
   |> result.map(tom.get_string(_, ["schemafile"]))
-  |> result.then(result.nil_error)
+  |> result.then(result.replace_error(_, Nil))
   |> result.unwrap("./schema.sql")
 }
 
@@ -353,8 +353,10 @@ fn get_migration_filenames(
 
     use #(numbers, _) <- result.try(string.split_once(filename, "_"))
 
-    use regex <- result.try(regex.from_string("^[0-9]+$") |> result.nil_error)
-    use <- bool.guard(when: !regex.check(regex, numbers), return: Error(Nil))
+    use regex <- result.try(
+      regexp.from_string("^[0-9]+$") |> result.replace_error(Nil),
+    )
+    use <- bool.guard(when: !regexp.check(regex, numbers), return: Error(Nil))
     Ok(path)
   })
   |> result.values

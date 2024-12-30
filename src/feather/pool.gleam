@@ -13,7 +13,9 @@ pub fn start(
   config: feather.Config,
   count: Int,
 ) -> Result(Pool(a), actor.StartError) {
-  puddle.start(count, fn() { feather.connect(config) |> result.nil_error })
+  puddle.start(count, fn() {
+    feather.connect(config) |> result.replace_error(Nil)
+  })
 }
 
 pub fn with_connection(pool: Pool(a), timeout: Int, fxn: fn(Connection) -> a) {
@@ -29,7 +31,8 @@ pub fn with_transaction(
   let result =
     with_connection(pool, timeout, fn(connection) {
       use _ <- result.try(
-        sqlight.exec("BEGIN TRANSACTION;", connection) |> result.nil_error,
+        sqlight.exec("BEGIN TRANSACTION;", connection)
+        |> result.replace_error(Nil),
       )
       case fxn(connection) {
         Ok(val) -> {
